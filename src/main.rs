@@ -65,6 +65,7 @@ impl Color {
 #[derive(Copy, Clone)]
 enum Instruction {
     Move(usize, usize), // move to X, Y
+    MoveRel(usize, usize), // move by dX, dY
     SetColor(Color),
     Blot, // set current pixel to pen color
     Comment(&'static str) // makes L-systems easier to implement
@@ -95,6 +96,7 @@ impl ProgramState {
     fn exec_instruction(&mut self, command: Instruction) {
         match command {
             Instruction::Move(x, y) => self.move_pen(x, y),
+            Instruction::MoveRel(dx, dy) => self.move_pen(self.pen_x + dx, self.pen_y + dy),
             Instruction::SetColor(color) => self.pen_color = color,
             Instruction::Blot => self.draw_pixel(self.pen_x, self.pen_y),
             Instruction::Comment(_) => ()
@@ -131,9 +133,9 @@ impl ProgramState {
 fn main() {
     let mut program = ProgramState::new(512, 512);
     program.exec_instruction(Instruction::SetColor(Color(0.0, 1.0, 1.0, 1.0)));
-    for i in 0..64 {
+    for i in 0..512 {
         program.exec_instruction(Instruction::Blot);
-        program.exec_instruction(Instruction::Move(i * 8, i * 8));
+        program.exec_instruction(Instruction::MoveRel(1, 1));
     }
     program.save_buffer("test.png");
 }
