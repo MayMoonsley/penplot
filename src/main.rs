@@ -64,17 +64,20 @@ impl Color {
 
 #[derive(Copy, Clone)]
 enum Instruction {
-    Move(usize, usize), // move to X, Y
-    MoveRel(usize, usize), // move by dX, dY
+    Move(f32, f32), // move to X, Y
+    MoveRel(f32, f32), // move by dX, dY
+    MoveForward(f32), // move forward by N
+    Turn(f32), // change heading by dT
     SetColor(Color),
     Blot, // set current pixel to pen color
     Comment(&'static str) // makes L-systems easier to implement
 }
 
 struct ProgramState {
-    pen_x: usize,
-    pen_y: usize,
+    pen_x: f32,
+    pen_y: f32,
     pen_color: Color,
+    heading: f32,
     width: usize,
     height: usize,
     buffer: Vec<Color>
@@ -84,8 +87,9 @@ impl ProgramState {
     fn new(width: usize, height: usize) -> ProgramState {
         let buffer: Vec<Color> = vec![Color(0.0, 0.0, 0.0, 0.0); width * height];
         ProgramState {
-            pen_x: 0,
-            pen_y: 0,
+            pen_x: 0.0,
+            pen_y: 0.0,
+            heading: 0.0,
             pen_color: Color(0.0, 0.0, 0.0, 0.0),
             width,
             height,
@@ -97,23 +101,32 @@ impl ProgramState {
         match command {
             Instruction::Move(x, y) => self.move_pen(x, y),
             Instruction::MoveRel(dx, dy) => self.move_pen(self.pen_x + dx, self.pen_y + dy),
+            Instruction::MoveForward(dist) => {
+                let dx = dist * self.heading.cos();
+                let dy = dist * self.heading.sin();
+                self.move_pen(self.pen_x + dx, self.pen_y + dy);
+            }
+            Instruction::Turn(theta) => self.heading += theta, 
             Instruction::SetColor(color) => self.pen_color = color,
             Instruction::Blot => self.draw_pixel(self.pen_x, self.pen_y),
             Instruction::Comment(_) => ()
         };
     }
     
-    fn move_pen(&mut self, x: usize, y: usize) {
-        let new_x = x % self.width;
-        let new_y = y % self.height;
+    fn move_pen(&mut self, new_x: f32, new_y: f32) {
         // TODO: draw line from old to new positions
         self.pen_x = new_x;
         self.pen_y = new_y;
     }
     
-    fn draw_pixel(&mut self, x: usize, y: usize) {
-        let index = x + y * self.width;
-        self.buffer[index] = Color::overlay(self.pen_color, self.buffer[index]);
+    fn draw_pixel(&mut self, x: f32, y: f32) {
+        // TODO: check that this always works
+        if x > -0.5 && x < self.width as f32 - 0.5 && y > -0.5 && y < self.height as f32 - 0.5 {
+            let ux = x.round() as usize;
+            let uy = y.round() as usize;
+            let index = ux + uy * self.width;
+            self.buffer[index] = Color::overlay(self.pen_color, self.buffer[index]);
+        }
     }
     
     fn save_buffer(&self, filename: &str) {
@@ -132,10 +145,12 @@ impl ProgramState {
 
 fn main() {
     let mut program = ProgramState::new(512, 512);
+    program.exec_instruction(Instruction::Move(256.0, 256.0));
     program.exec_instruction(Instruction::SetColor(Color(0.0, 1.0, 1.0, 1.0)));
     for i in 0..512 {
         program.exec_instruction(Instruction::Blot);
-        program.exec_instruction(Instruction::MoveRel(1, 1));
+        program.exec_instruction(Instruction::Turn(0.01));
+        program.exec_instruction(Instruction::MoveForward(2.0));
     }
     program.save_buffer("test.png");
 }
