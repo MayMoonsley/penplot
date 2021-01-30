@@ -75,7 +75,9 @@ enum Instruction {
     Blot, // set current pixel to pen color
     Comment(String), // makes L-systems easier to implement
     Goto(usize), // set pc to i
-    Jump(isize) // set pc to pc + i + 1
+    Jump(isize), // set pc to pc + i + 1
+    Call(usize), // call subroutine at position i
+    Return // return from subroutine call
 }
 
 impl Instruction {
@@ -98,6 +100,8 @@ impl Instruction {
             ";" => Some(Instruction::Comment(split.as_str().to_string())),
             "GOTO" => Some(Instruction::Goto(split.next()?.parse().ok()?)),
             "JUMP" => Some(Instruction::Jump(split.next()?.parse().ok()?)),
+            "CALL" => Some(Instruction::Call(split.next()?.parse().ok()?)),
+            "RTRN" => Some(Instruction::Return), 
             _ => None
         }
     }
@@ -124,7 +128,8 @@ struct ProgramState {
     width: usize,
     height: usize,
     buffer: Vec<Color>,
-    program_counter: usize
+    program_counter: usize,
+    call_stack: Vec<usize>
 }
 
 impl ProgramState {
@@ -138,7 +143,8 @@ impl ProgramState {
             width,
             height,
             buffer,
-            program_counter: 0
+            program_counter: 0,
+            call_stack: vec![]
         }
     }
     
@@ -190,7 +196,12 @@ impl ProgramState {
                 } else {
                     Some(new_pc as usize)
                 }
-            }
+            },
+            Instruction::Call(pc) => {
+                self.call_stack.push(self.program_counter + 1);
+                Some(*pc)
+            },
+            Instruction::Return => self.call_stack.pop()
         };
         match new_pc {
             None => self.program_counter + 1,
