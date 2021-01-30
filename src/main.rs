@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 #[derive(Copy, Clone)]
 struct Color(f32, f32, f32, f32); // RGBA in [0, 1]
 
@@ -108,23 +110,58 @@ impl ProgramState {
             }
             Instruction::Turn(theta) => self.heading += theta, 
             Instruction::SetColor(color) => self.pen_color = color,
-            Instruction::Blot => self.draw_pixel(self.pen_x, self.pen_y),
+            Instruction::Blot => self.draw_pixel_f(self.pen_x, self.pen_y),
             Instruction::Comment(_) => ()
         };
     }
     
     fn move_pen(&mut self, new_x: f32, new_y: f32) {
-        // TODO: draw line from old to new positions
+        self.plot_line(self.pen_x.round() as isize, self.pen_y.round() as isize,
+            new_x.round() as isize, new_y.round() as isize);
         self.pen_x = new_x;
         self.pen_y = new_y;
     }
     
-    fn draw_pixel(&mut self, x: f32, y: f32) {
-        // TODO: check that this always works
-        if x > -0.5 && x < self.width as f32 - 0.5 && y > -0.5 && y < self.height as f32 - 0.5 {
-            let ux = x.round() as usize;
-            let uy = y.round() as usize;
-            let index = ux + uy * self.width;
+    fn plot_line(&mut self, mut x0: isize, mut y0: isize, x1: isize, y1: isize) {
+        let dx = (x1 - x0).abs();
+        let sx = match x0.cmp(&x1) {
+            Ordering::Less => 1,
+            _ => -1
+        };
+        let dy = -(y1 - y0).abs();
+        let sy = match y0.cmp(&y1) {
+            Ordering::Less => 1,
+            _ => -1
+        };
+        let mut err = dx + dy;
+        loop {
+            self.draw_pixel_i(x0, y0);
+            if x0 == x1 && y0 == y1 {
+                break;
+            }
+            let e2 = 2 * err;
+            if e2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+            if e2 <= dx {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+    
+    fn draw_pixel_f(&mut self, x: f32, y: f32) {
+        self.draw_pixel_i(x.round() as isize, y.round() as isize);
+    }
+    
+    fn draw_pixel_i(&mut self, x: isize, y: isize) {
+        let w = self.width as isize;
+        let h = self.height as isize;
+        if x < 0 || y < 0 || x >= w || y >= h {
+            return;
+        } else {
+            let index = (x + y * w) as usize;
             self.buffer[index] = Color::overlay(self.pen_color, self.buffer[index]);
         }
     }
@@ -146,11 +183,11 @@ impl ProgramState {
 fn main() {
     let mut program = ProgramState::new(512, 512);
     program.exec_instruction(Instruction::Move(256.0, 256.0));
-    program.exec_instruction(Instruction::SetColor(Color(0.0, 1.0, 1.0, 1.0)));
-    for i in 0..512 {
-        program.exec_instruction(Instruction::Blot);
-        program.exec_instruction(Instruction::Turn(0.01));
-        program.exec_instruction(Instruction::MoveForward(2.0));
+    program.exec_instruction(Instruction::SetColor(Color(1.0, 1.0, 1.0, 1.0)));
+    for _ in 0..8 {
+        program.exec_instruction(Instruction::MoveForward(64.0));
+        program.exec_instruction(Instruction::MoveForward(-64.0));
+        program.exec_instruction(Instruction::Turn(0.785));
     }
     program.save_buffer("test.png");
 }
