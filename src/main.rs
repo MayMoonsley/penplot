@@ -1,6 +1,7 @@
 #![feature(str_split_as_str)]
 use std::cmp::Ordering;
 use std::fs;
+use std::f32::consts::TAU;
 
 #[derive(Copy, Clone)]
 struct Color(f32, f32, f32, f32); // RGBA in [0, 1]
@@ -93,6 +94,10 @@ impl Instruction {
                 split.next()?.parse().ok()?)),
             "WALK" => Some(Instruction::MoveForward(split.next()?.parse().ok()?)),
             "TURN" => Some(Instruction::Turn(split.next()?.parse().ok()?)),
+            "TRN%" => {
+                let theta: f32 = split.next()?.parse().ok()?;
+                Some(Instruction::Turn(theta * TAU))
+            },
             "RGBA" => Some(Instruction::SetColor(Color(
                 split.next()?.parse().ok()?, split.next()?.parse().ok()?,
                 split.next()?.parse().ok()?, split.next()?.parse().ok()?
