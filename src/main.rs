@@ -71,7 +71,9 @@ enum Instruction {
     Turn(f32), // change heading by dT
     SetColor(Color),
     Blot, // set current pixel to pen color
-    Comment(String) // makes L-systems easier to implement
+    Comment(String), // makes L-systems easier to implement
+    Goto(usize), // set pc to i
+    Jump(isize) // set pc to pc + i + 1
 }
 
 struct ProgramState {
@@ -81,7 +83,8 @@ struct ProgramState {
     heading: f32,
     width: usize,
     height: usize,
-    buffer: Vec<Color>
+    buffer: Vec<Color>,
+    program_counter: usize
 }
 
 impl ProgramState {
@@ -94,24 +97,65 @@ impl ProgramState {
             pen_color: Color(0.0, 0.0, 0.0, 0.0),
             width,
             height,
-            buffer
+            buffer,
+            program_counter: 0
         }
     }
     
-    fn exec_instruction(&mut self, command: &Instruction) {
-        match command {
-            Instruction::Move(x, y) => self.move_pen(*x, *y),
-            Instruction::MoveRel(dx, dy) => self.move_pen(self.pen_x + *dx, self.pen_y + *dy),
+    fn execute(&mut self, commands: Vec<Instruction>) {
+        self.program_counter = 0;
+        loop {
+            self.program_counter = match commands.get(self.program_counter) {
+                Some(command) => self.exec_instruction(&command),
+                None => break
+            }
+        }
+    }
+    
+    // returns new program counter
+    fn exec_instruction(&mut self, command: &Instruction) -> usize {
+        let new_pc: Option<usize> = match command {
+            Instruction::Move(x, y) => {
+                self.move_pen(*x, *y);
+                None
+            },
+            Instruction::MoveRel(dx, dy) => {
+                self.move_pen(self.pen_x + *dx, self.pen_y + *dy);
+                None
+            },
             Instruction::MoveForward(dist) => {
                 let dx = *dist * self.heading.cos();
                 let dy = *dist * self.heading.sin();
                 self.move_pen(self.pen_x + dx, self.pen_y + dy);
+                None
             }
-            Instruction::Turn(theta) => self.heading += *theta,
-            Instruction::SetColor(color) => self.pen_color = *color,
-            Instruction::Blot => self.draw_pixel_f(self.pen_x, self.pen_y),
-            Instruction::Comment(_) => ()
+            Instruction::Turn(theta) => {
+                self.heading += *theta;
+                None
+            },
+            Instruction::SetColor(color) => {
+                self.pen_color = *color;
+                None
+            },
+            Instruction::Blot => {
+                self.draw_pixel_f(self.pen_x, self.pen_y);
+                None
+            },
+            Instruction::Comment(_) => None,
+            Instruction::Goto(pc) => Some(*pc),
+            Instruction::Jump(i) => {
+                let new_pc = self.program_counter as isize + *i + 1;
+                if new_pc < 0 {
+                    Some(0)
+                } else {
+                    Some(new_pc as usize)
+                }
+            }
         };
+        match new_pc {
+            None => self.program_counter + 1,
+            Some(pc) => pc
+        }
     }
     
     fn move_pen(&mut self, new_x: f32, new_y: f32) {
@@ -181,13 +225,15 @@ impl ProgramState {
 
 fn main() {
     let mut program = ProgramState::new(512, 512);
-    program.exec_instruction(&Instruction::Move(256.0, 256.0));
-    program.exec_instruction(&Instruction::SetColor(Color(1.0, 1.0, 1.0, 1.0)));
     let points = 5;
     let dt = 3.14159 / (points as f32 * 0.25);
+    let mut commands = vec![Instruction::Move(256.0, 256.0),
+        Instruction::SetColor(Color(1.0, 1.0, 1.0, 1.0)),
+        Instruction::Jump(1)];
     for _ in 0..points {
-        program.exec_instruction(&Instruction::MoveForward(64.0));
-        program.exec_instruction(&Instruction::Turn(dt));
+        commands.push(Instruction::MoveForward(64.0));
+        commands.push(Instruction::Turn(dt));
     }
+    program.execute(commands);
     program.save_buffer("test.png");
 }
