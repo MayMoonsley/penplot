@@ -77,7 +77,8 @@ enum Instruction {
     Goto(usize), // set pc to i
     Jump(isize), // set pc to pc + i + 1
     Call(usize), // call subroutine at position i
-    Return // return from subroutine call
+    Return, // return from subroutine call
+    Repeat(usize, usize) // repeat subroutine at position i n times
 }
 
 impl Instruction {
@@ -102,6 +103,8 @@ impl Instruction {
             "JUMP" => Some(Instruction::Jump(split.next()?.parse().ok()?)),
             "CALL" => Some(Instruction::Call(split.next()?.parse().ok()?)),
             "RTRN" => Some(Instruction::Return), 
+            "LOOP" => Some(Instruction::Repeat(split.next()?.parse().ok()?,
+                split.next()?.parse().ok()?)), 
             _ => None
         }
     }
@@ -201,7 +204,15 @@ impl ProgramState {
                 self.call_stack.push(self.program_counter + 1);
                 Some(*pc)
             },
-            Instruction::Return => self.call_stack.pop()
+            Instruction::Return => self.call_stack.pop(),
+            Instruction::Repeat(pc, n) => {
+                let pc = *pc;
+                self.call_stack.push(self.program_counter + 1);
+                for _ in 0..(*n - 1) {
+                    self.call_stack.push(pc);
+                }
+                Some(pc)
+            } 
         };
         match new_pc {
             None => self.program_counter + 1,
