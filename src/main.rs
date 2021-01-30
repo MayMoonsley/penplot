@@ -1,4 +1,6 @@
+#![feature(str_split_as_str)]
 use std::cmp::Ordering;
+use std::fs;
 
 #[derive(Copy, Clone)]
 struct Color(f32, f32, f32, f32); // RGBA in [0, 1]
@@ -74,6 +76,44 @@ enum Instruction {
     Comment(String), // makes L-systems easier to implement
     Goto(usize), // set pc to i
     Jump(isize) // set pc to pc + i + 1
+}
+
+impl Instruction {
+
+    fn from_string(text: &str) -> Option<Instruction> {
+        // TODO: use proper parser combinators and not this nasty mess
+        let mut split = text.split(' ');
+        match split.next()? {
+            "MOVE" => Some(Instruction::Move(split.next()?.parse().ok()?,
+                split.next()?.parse().ok()?)),
+            "SHFT" => Some(Instruction::MoveRel(split.next()?.parse().ok()?,
+                split.next()?.parse().ok()?)),
+            "WALK" => Some(Instruction::MoveForward(split.next()?.parse().ok()?)),
+            "TURN" => Some(Instruction::Turn(split.next()?.parse().ok()?)),
+            "RGBA" => Some(Instruction::SetColor(Color(
+                split.next()?.parse().ok()?, split.next()?.parse().ok()?,
+                split.next()?.parse().ok()?, split.next()?.parse().ok()?
+            ))),
+            "BLOT" => Some(Instruction::Blot),
+            ";" => Some(Instruction::Comment(split.as_str().to_string())),
+            "GOTO" => Some(Instruction::Goto(split.next()?.parse().ok()?)),
+            "JUMP" => Some(Instruction::Jump(split.next()?.parse().ok()?)),
+            _ => None
+        }
+    }
+    
+    fn parse_program(text: String) -> Vec<Instruction> {
+        let split = text.split('\n');
+        let mut program: Vec<Instruction> = vec![];
+        for string in split {
+            match Instruction::from_string(string) {
+                Some(command) => program.push(command),
+                None => ()
+            }
+        }
+        program
+    }
+
 }
 
 struct ProgramState {
@@ -225,15 +265,8 @@ impl ProgramState {
 
 fn main() {
     let mut program = ProgramState::new(512, 512);
-    let points = 5;
-    let dt = 3.14159 / (points as f32 * 0.25);
-    let mut commands = vec![Instruction::Move(256.0, 256.0),
-        Instruction::SetColor(Color(1.0, 1.0, 1.0, 1.0)),
-        Instruction::Jump(1)];
-    for _ in 0..points {
-        commands.push(Instruction::MoveForward(64.0));
-        commands.push(Instruction::Turn(dt));
-    }
+    let commands = Instruction::parse_program(fs::read_to_string("test.txt")
+        .expect("Something went wrong reading the file"));
     program.execute(commands);
     program.save_buffer("test.png");
 }
