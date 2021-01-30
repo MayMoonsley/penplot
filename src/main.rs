@@ -64,7 +64,6 @@ impl Color {
 
 }
 
-#[derive(Copy, Clone)]
 enum Instruction {
     Move(f32, f32), // move to X, Y
     MoveRel(f32, f32), // move by dX, dY
@@ -72,7 +71,7 @@ enum Instruction {
     Turn(f32), // change heading by dT
     SetColor(Color),
     Blot, // set current pixel to pen color
-    Comment(&'static str) // makes L-systems easier to implement
+    Comment(String) // makes L-systems easier to implement
 }
 
 struct ProgramState {
@@ -99,17 +98,17 @@ impl ProgramState {
         }
     }
     
-    fn exec_instruction(&mut self, command: Instruction) {
+    fn exec_instruction(&mut self, command: &Instruction) {
         match command {
-            Instruction::Move(x, y) => self.move_pen(x, y),
-            Instruction::MoveRel(dx, dy) => self.move_pen(self.pen_x + dx, self.pen_y + dy),
+            Instruction::Move(x, y) => self.move_pen(*x, *y),
+            Instruction::MoveRel(dx, dy) => self.move_pen(self.pen_x + *dx, self.pen_y + *dy),
             Instruction::MoveForward(dist) => {
-                let dx = dist * self.heading.cos();
-                let dy = dist * self.heading.sin();
+                let dx = *dist * self.heading.cos();
+                let dy = *dist * self.heading.sin();
                 self.move_pen(self.pen_x + dx, self.pen_y + dy);
             }
-            Instruction::Turn(theta) => self.heading += theta, 
-            Instruction::SetColor(color) => self.pen_color = color,
+            Instruction::Turn(theta) => self.heading += *theta,
+            Instruction::SetColor(color) => self.pen_color = *color,
             Instruction::Blot => self.draw_pixel_f(self.pen_x, self.pen_y),
             Instruction::Comment(_) => ()
         };
@@ -182,12 +181,13 @@ impl ProgramState {
 
 fn main() {
     let mut program = ProgramState::new(512, 512);
-    program.exec_instruction(Instruction::Move(256.0, 256.0));
-    program.exec_instruction(Instruction::SetColor(Color(1.0, 1.0, 1.0, 1.0)));
-    for _ in 0..8 {
-        program.exec_instruction(Instruction::MoveForward(64.0));
-        program.exec_instruction(Instruction::MoveForward(-64.0));
-        program.exec_instruction(Instruction::Turn(0.785));
+    program.exec_instruction(&Instruction::Move(256.0, 256.0));
+    program.exec_instruction(&Instruction::SetColor(Color(1.0, 1.0, 1.0, 1.0)));
+    let points = 5;
+    let dt = 3.14159 / (points as f32 * 0.25);
+    for _ in 0..points {
+        program.exec_instruction(&Instruction::MoveForward(64.0));
+        program.exec_instruction(&Instruction::Turn(dt));
     }
     program.save_buffer("test.png");
 }
