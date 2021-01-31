@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use std::fs;
 use std::f32::consts::TAU;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct Color(f32, f32, f32, f32); // RGBA in [0, 1]
 
 impl Color {
@@ -67,10 +67,12 @@ impl Color {
 
 }
 
+#[derive(Debug)]
 enum Instruction {
     Move(f32, f32), // move to X, Y
     MoveRel(f32, f32), // move by dX, dY
     MoveForward(f32), // move forward by N
+    Face(f32), // set heading to T
     Turn(f32), // change heading by dT
     SetColor(Color),
     Blot, // set current pixel to pen color
@@ -93,6 +95,11 @@ impl Instruction {
             "SHFT" => Some(Instruction::MoveRel(split.next()?.parse().ok()?,
                 split.next()?.parse().ok()?)),
             "WALK" => Some(Instruction::MoveForward(split.next()?.parse().ok()?)),
+            "FACE" => Some(Instruction::Face(split.next()?.parse().ok()?)),
+            "FCE%" => {
+                let theta: f32 = split.next()?.parse().ok()?;
+                Some(Instruction::Face(theta * TAU))
+            },
             "TURN" => Some(Instruction::Turn(split.next()?.parse().ok()?)),
             "TRN%" => {
                 let theta: f32 = split.next()?.parse().ok()?;
@@ -182,7 +189,11 @@ impl ProgramState {
                 let dy = *dist * self.heading.sin();
                 self.move_pen(self.pen_x + dx, self.pen_y + dy);
                 None
-            }
+            },
+            Instruction::Face(theta) => {
+                self.heading = *theta;
+                None
+            },
             Instruction::Turn(theta) => {
                 self.heading += *theta;
                 None
