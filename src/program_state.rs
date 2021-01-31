@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
 use crate::color::Color;
 use crate::instruction::Instruction;
+use std::cmp::Ordering;
 
 pub struct ProgramState {
     pen_x: f32,

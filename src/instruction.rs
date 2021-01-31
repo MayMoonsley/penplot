@@ -1,5 +1,5 @@
-use std::f32::consts::TAU;
 use crate::color::Color;
+use std::f32::consts::TAU;
 
 #[derive(Debug)]
 pub enum Instruction {
@@ -82,4 +82,3 @@ impl Instruction {
         program
     }
 }
-
