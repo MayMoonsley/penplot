@@ -11,6 +11,7 @@ pub struct ProgramState {
     height: usize,
     buffer: Vec<Color>,
     program_counter: usize,
+    executing: bool,
     call_stack: Vec<usize>,
 }
 
@@ -26,13 +27,15 @@ impl ProgramState {
             height,
             buffer,
             program_counter: 0,
+            executing: true,
             call_stack: vec![],
         }
     }
 
     pub fn execute(&mut self, commands: Vec<Instruction>) {
         self.program_counter = 0;
-        loop {
+        self.executing = true;
+        while self.executing {
             self.program_counter = match commands.get(self.program_counter) {
                 Some(command) => self.exec_instruction(&command),
                 None => break,
@@ -95,6 +98,10 @@ impl ProgramState {
                     self.call_stack.push(pc);
                 }
                 Some(pc)
+            }
+            Instruction::Halt => {
+                self.executing = false;
+                None
             }
         };
         match new_pc {

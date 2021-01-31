@@ -1,17 +1,16 @@
-JUMP 4
-WALK 16
+MOVE 16 16
+LOOP row 16
+HALT
+; functions live down here
+WALK 16 @ line
 WALK -16
 TRN% 0.1
 RTRN
-JUMP 5
-RGBA #FFFFFF
-LOOP 1 4
+RGBA #FFFFFF @ tuft
+LOOP line 4
 BLNK
 SHFT 32 0
 RTRN
-MOVE 16 16
-JUMP 3
-LOOP 6 16
+LOOP tuft 16 @ row
 SHFT -512 32
 RTRN
-LOOP 13 16

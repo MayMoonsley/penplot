@@ -1,4 +1,5 @@
 use crate::color::Color;
+use std::collections::HashMap;
 use std::f32::consts::TAU;
 
 #[derive(Debug)]
@@ -16,11 +17,20 @@ pub enum Instruction {
     Call(usize),          // call subroutine at position i
     Return,               // return from subroutine call
     Repeat(usize, usize), // repeat subroutine at position i n times
+    Halt,                 // halt
 }
 
 impl Instruction {
-    // TODO: use the proper FromStr method
-    pub fn from_string(text: &str) -> Option<Instruction> {
+
+    fn token_to_address(text: &str, symbol_table: &HashMap<String, usize>) -> Option<usize> {
+        match symbol_table.get(text) {
+            Some(add) => Some(*add),
+            None => text.parse().ok()
+        }
+    }
+
+    // TODO: return errors
+    fn from_string(text: &str, symbol_table: &HashMap<String, usize>) -> Option<Instruction> {
         // TODO: use proper parser combinators and not this nasty mess
         let mut split = text.split(' ');
         match split.next()? {
@@ -58,27 +68,36 @@ impl Instruction {
             "BLNK" => Some(Instruction::SetColor(Color(0.0, 0.0, 0.0, 0.0))),
             "BLOT" => Some(Instruction::Blot),
             ";" => Some(Instruction::Comment(split.as_str().to_string())),
-            "GOTO" => Some(Instruction::Goto(split.next()?.parse().ok()?)),
+            "GOTO" => Some(Instruction::Goto(
+                Instruction::token_to_address(split.next()?, symbol_table)?
+            )),
             "JUMP" => Some(Instruction::Jump(split.next()?.parse().ok()?)),
             "CALL" => Some(Instruction::Call(split.next()?.parse().ok()?)),
             "RTRN" => Some(Instruction::Return),
             "LOOP" => Some(Instruction::Repeat(
-                split.next()?.parse().ok()?,
+                Instruction::token_to_address(split.next()?, symbol_table)?,
                 split.next()?.parse().ok()?,
             )),
+            "HALT" => Some(Instruction::Halt),
             _ => None,
         }
     }
 
-    pub fn parse_program(text: String) -> Vec<Instruction> {
-        let split = text.split('\n');
-        let mut program: Vec<Instruction> = vec![];
-        for string in split {
-            match Instruction::from_string(string) {
-                Some(command) => program.push(command),
-                None => (),
+    pub fn parse_program(text: String) -> Option<Vec<Instruction>> {
+        let split: Vec<&str> = text.trim().split('\n').collect();
+        // generate symbol table
+        let mut symbol_table: HashMap<String, usize> = HashMap::new();
+        for i in 0..split.len() {
+            let mut command = split[i].split('@');
+            if let Some(label) = command.nth(1) {
+                symbol_table.insert(label.trim().to_string(), i);
             }
         }
-        program
+        // parse instructions
+        let mut program: Vec<Instruction> = vec![];
+        for string in split {
+            program.push(Instruction::from_string(string, &symbol_table)?);
+        }
+        Some(program)
     }
 }

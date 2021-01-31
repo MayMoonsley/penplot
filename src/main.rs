@@ -28,6 +28,6 @@ fn main() {
     let commands = Instruction::parse_program(
         fs::read_to_string(&source).expect("Something went wrong reading the file"),
     );
-    program.execute(commands);
+    program.execute(commands.expect("Erorr parsing code"));
     program.save_buffer(&out);
 }
