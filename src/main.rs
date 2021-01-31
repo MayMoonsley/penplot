@@ -166,6 +166,7 @@ impl Instruction {
                     ))),
                 }
             }
+            "BLNK" => Some(Instruction::SetColor(Color(0.0, 0.0, 0.0, 0.0))),
             "BLOT" => Some(Instruction::Blot),
             ";" => Some(Instruction::Comment(split.as_str().to_string())),
             "GOTO" => Some(Instruction::Goto(split.next()?.parse().ok()?)),
