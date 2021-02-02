@@ -1,6 +1,7 @@
 use crate::color::Color;
 use std::collections::HashMap;
 use std::f32::consts::TAU;
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
 pub enum Instruction {
@@ -20,12 +21,32 @@ pub enum Instruction {
     Halt,                 // halt
 }
 
-impl Instruction {
+impl Display for Instruction {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            Instruction::Move(x, y) => write!(f, "MOVE {} {}", x, y),
+            Instruction::MoveRel(dx, dy) => write!(f, "SHFT {} {}", dx, dy),
+            Instruction::MoveForward(n) => write!(f, "WALK {}", n),
+            Instruction::Face(theta) => write!(f, "FACE {}", theta),
+            Instruction::Turn(dt) => write!(f, "TURN {}", dt),
+            Instruction::SetColor(color) => write!(f, "RGBA {}", color),
+            Instruction::Blot => write!(f, "BLOT"),
+            Instruction::Comment(s) => write!(f, "; {}", s),
+            Instruction::Goto(i) => write!(f, "GOTO {}", i),
+            Instruction::Jump(i) => write!(f, "JUMP {}", i),
+            Instruction::Call(i) => write!(f, "CALL {}", i),
+            Instruction::Return => write!(f, "RTRN"),
+            Instruction::Repeat(i, n) => write!(f, "LOOP {} {}", i, n),
+            Instruction::Halt => write!(f, "HALT"),
+        }
+    }
+}
 
+impl Instruction {
     fn token_to_address(text: &str, symbol_table: &HashMap<String, usize>) -> Option<usize> {
         match symbol_table.get(text) {
             Some(add) => Some(*add),
-            None => text.parse().ok()
+            None => text.parse().ok(),
         }
     }
 
@@ -68,9 +89,10 @@ impl Instruction {
             "BLNK" => Some(Instruction::SetColor(Color(0.0, 0.0, 0.0, 0.0))),
             "BLOT" => Some(Instruction::Blot),
             ";" => Some(Instruction::Comment(split.as_str().to_string())),
-            "GOTO" => Some(Instruction::Goto(
-                Instruction::token_to_address(split.next()?, symbol_table)?
-            )),
+            "GOTO" => Some(Instruction::Goto(Instruction::token_to_address(
+                split.next()?,
+                symbol_table,
+            )?)),
             "JUMP" => Some(Instruction::Jump(split.next()?.parse().ok()?)),
             "CALL" => Some(Instruction::Call(split.next()?.parse().ok()?)),
             "RTRN" => Some(Instruction::Return),

@@ -1,8 +1,21 @@
-use std::fmt;
+use std::fmt::{self, Display, Formatter};
 use std::num::ParseIntError;
 use std::str::FromStr;
 #[derive(Copy, Clone, Debug)]
 pub struct Color(pub f32, pub f32, pub f32, pub f32); // RGBA in [0, 1]
+
+impl Display for Color {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "#{:02X?}{:02X?}{:02X?}{:02X?}",
+            self.red_byte(),
+            self.green_byte(),
+            self.blue_byte(),
+            self.alpha_byte()
+        )
+    }
+}
 
 impl Color {
     pub fn overlay(top: Color, bottom: Color) -> Color {
@@ -70,8 +83,8 @@ pub enum ColorParseError {
     WrongLength,
 }
 
-impl fmt::Display for ColorParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Display for ColorParseError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             ColorParseError::NoHash => write!(f, "missing #"),
             ColorParseError::BadInt => write!(f, "malformed int"),

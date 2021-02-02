@@ -1,12 +1,23 @@
 #![feature(str_split_as_str)]
 mod color;
 mod instruction;
+mod l_system;
 mod program_state;
 
 use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
 use std::env;
-use std::fs;
+use std::fs::{self, File};
+use std::io::Result as IoResult;
+use std::io::Write;
+
+fn save_program(code: &Vec<Instruction>, filename: &str) -> IoResult<()> {
+    let mut buffer = File::create(filename)?;
+    for line in code {
+        write!(buffer, "{}\n", line)?;
+    }
+    Ok(())
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
