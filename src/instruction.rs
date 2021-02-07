@@ -5,25 +5,27 @@ use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
 pub enum Instruction {
-    Move(f32, f32),    // move to X, Y
-    MoveRel(f32, f32), // move by dX, dY
-    MoveForward(f32),  // move forward by N
-    Face(f32),         // set heading to T
-    Turn(f32),         // change heading by dT
-    SetColor(Color),
-    Blot,                 // set current pixel to pen color
-    Comment(String),      // makes L-systems easier to implement
-    Goto(usize),          // set pc to i
-    Jump(isize),          // set pc to pc + i + 1
-    Call(usize),          // call subroutine at position i
-    Return,               // return from subroutine call
-    Repeat(usize, usize), // repeat subroutine at position i n times
-    Halt,                 // halt
+    Noop,                   // do nothing
+    Move(f32, f32),         // move to X, Y
+    MoveRel(f32, f32),      // move by dX, dY
+    MoveForward(f32),       // move forward by N
+    Face(f32),              // set heading to T
+    Turn(f32),              // change heading by dT
+    SetColor(Color),        // set pen color to c
+    Blot,                   // set current pixel to pen color
+    Comment(String),        // makes L-systems easier to implement
+    Goto(usize),            // set pc to i
+    Jump(isize),            // set pc to pc + i + 1
+    Call(usize),            // call subroutine at position i
+    Return,                 // return from subroutine call
+    Repeat(usize, usize),   // repeat subroutine at position i n times
+    Halt,                   // halt
 }
 
 impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
+            Instruction::Noop => write!(f, "NOOP"),
             Instruction::Move(x, y) => write!(f, "MOVE {} {}", x, y),
             Instruction::MoveRel(dx, dy) => write!(f, "SHFT {} {}", dx, dy),
             Instruction::MoveForward(n) => write!(f, "WALK {}", n),
@@ -55,6 +57,7 @@ impl Instruction {
         // TODO: use proper parser combinators and not this nasty mess
         let mut split = text.split(' ');
         match split.next()? {
+            "NOOP" => Some(Instruction::Noop),
             "MOVE" => Some(Instruction::Move(
                 split.next()?.parse().ok()?,
                 split.next()?.parse().ok()?,

@@ -46,6 +46,7 @@ impl ProgramState {
     // returns new program counter
     fn exec_instruction(&mut self, command: &Instruction) -> usize {
         let new_pc: Option<usize> = match command {
+            Instruction::Noop => None,
             Instruction::Move(x, y) => {
                 self.move_pen(*x, *y);
                 None
