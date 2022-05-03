@@ -55,7 +55,7 @@ impl Instruction {
     // TODO: return errors
     fn from_string(text: &str, symbol_table: &HashMap<String, usize>) -> Option<Instruction> {
         // TODO: use proper parser combinators and not this nasty mess
-        let mut split = text.split(' ');
+        let mut split = text.trim().split(' ');
         match split.next()? {
             "NOOP" => Some(Instruction::Noop),
             "MOVE" => Some(Instruction::Move(
