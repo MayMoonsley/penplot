@@ -6,10 +6,13 @@ mod program_state;
 
 use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
+use std::boxed::Box;
 use std::env;
 use std::fs::{self, File};
 use std::io::Result as IoResult;
 use std::io::Write;
+use std::path::Path;
+use clap::{Args, Parser, Subcommand};
 
 fn save_program(code: &Vec<Instruction>, filename: &str) -> IoResult<()> {
     let mut buffer = File::create(filename)?;
@@ -19,26 +22,49 @@ fn save_program(code: &Vec<Instruction>, filename: &str) -> IoResult<()> {
     Ok(())
 }
 
+#[derive(Parser)]
+#[clap(author = "May Lawver", version, about = "A pseudo-assembly turtle graphics language.", long_about = None)]
+struct Command {
+    #[clap(subcommand)]
+    which: PenplotCommand
+}
+
+impl Command {
+    fn run(&self) {
+        match &self.which {
+            PenplotCommand::Run(args) => args.run()
+        }
+    }
+}
+
+#[derive(Subcommand)]
+enum PenplotCommand {
+    Run(RunArgs)
+}
+
+/// Run a specified program and render its output to file.
+#[derive(Args)]
+struct RunArgs {
+    /// Filename of source code to run
+    #[clap(short, long)]
+    input: String,
+    #[clap(short, long)]
+    /// Filename to save the resulting image as
+    output: String
+}
+
+impl RunArgs {
+    fn run(&self) {
+        let mut program = ProgramState::new(512, 512);
+        let commands = Instruction::parse_program(
+            fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
+        );
+        program.execute(commands.expect("Error parsing code"));
+        program.save_buffer(&self.output);
+    }
+}
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let source = match args.get(1) {
-        Some(s) => s,
-        None => {
-            println!("Error: program filename required");
-            std::process::exit(1);
-        }
-    };
-    let out = match args.get(2) {
-        Some(s) => s,
-        None => {
-            println!("Error: output filename required");
-            std::process::exit(1);
-        }
-    };
-    let mut program = ProgramState::new(512, 512);
-    let commands = Instruction::parse_program(
-        fs::read_to_string(&source).expect("Something went wrong reading the file"),
-    );
-    program.execute(commands.expect("Erorr parsing code"));
-    program.save_buffer(&out);
+    let command = Command::parse();
+    command.run();
 }
