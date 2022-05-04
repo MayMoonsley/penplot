@@ -11,7 +11,6 @@ use std::env;
 use std::fs::{self, File};
 use std::io::Result as IoResult;
 use std::io::Write;
-use std::path::Path;
 use clap::{Args, Parser, Subcommand};
 
 fn save_program(code: &Vec<Instruction>, filename: &str) -> IoResult<()> {
@@ -50,12 +49,18 @@ struct RunArgs {
     input: String,
     #[clap(short, long)]
     /// Filename to save the resulting image as
-    output: String
+    output: String,
+    /// Width of canvas
+    #[clap(long, default_value_t = 512)]
+    width: usize,
+    /// Height of canvas
+    #[clap(long, default_value_t = 512)]
+    height: usize
 }
 
 impl RunArgs {
     fn run(&self) {
-        let mut program = ProgramState::new(512, 512);
+        let mut program = ProgramState::new(self.width, self.height);
         let commands = Instruction::parse_program(
             fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
         );
