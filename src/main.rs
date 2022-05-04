@@ -1,4 +1,3 @@
-#![feature(str_split_as_str)]
 mod color;
 mod instruction;
 mod l_system;
