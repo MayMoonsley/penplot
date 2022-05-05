@@ -1,12 +1,10 @@
 mod color;
 mod instruction;
-mod l_system;
+mod parse_instruction;
 mod program_state;
 
 use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
-use std::boxed::Box;
-use std::env;
 use std::fs::{self, File};
 use std::io::Result as IoResult;
 use std::io::Write;

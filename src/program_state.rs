@@ -48,25 +48,26 @@ impl ProgramState {
         let new_pc: Option<usize> = match command {
             Instruction::Noop => None,
             Instruction::Move(x, y) => {
-                self.move_pen(*x, *y);
+                self.move_pen(*x as f32, *y as f32);
                 None
             }
             Instruction::MoveRel(dx, dy) => {
-                self.move_pen(self.pen_x + *dx, self.pen_y + *dy);
+                self.move_pen(self.pen_x + *dx as f32, self.pen_y + *dy as f32);
                 None
             }
             Instruction::MoveForward(dist) => {
-                let dx = *dist * self.heading.cos();
-                let dy = *dist * self.heading.sin();
+                let dist = *dist as f32;
+                let dx = dist * self.heading.cos();
+                let dy = dist * self.heading.sin();
                 self.move_pen(self.pen_x + dx, self.pen_y + dy);
                 None
             }
             Instruction::Face(theta) => {
-                self.heading = *theta;
+                self.heading = (*theta as f32).to_radians();
                 None
             }
             Instruction::Turn(theta) => {
-                self.heading += *theta;
+                self.heading += (*theta as f32).to_radians();
                 None
             }
             Instruction::SetColor(color) => {

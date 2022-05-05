@@ -16,10 +16,10 @@ saved to.
 | `MOVE x y`     | Move the pen head to (x, y).                                 |
 | `SHFT dx dy`   | Move the pen head over by (dx, dy).                          |
 | `WALK d`       | Move the pen head forward d pixels.                          |
-| `FACE t`       | Set current heading to t radians.                            |
-| `FCE% p`       | Set current heading to p * TAU.                              |
-| `TURN t`       | Turn counterclockwise t radians.                             |
-| `TRN% p`       | Turn counterclockwise p * TAU radians.                       |
+| `FACE t`       | Set current heading to t degrees.                            |
+| `FCE% p`       | Set current heading to p * 360.                              |
+| `TURN t`       | Turn counterclockwise t degrees.                             |
+| `TRN% p`       | Turn counterclockwise p * 360 degrees.                       |
 | `RGBA r g b a` | Set current pen color to (r, g, b, a).                       |
 | `RGBA hex`     | Set current pen color to specified hex code.                 |
 | `BLNK`         | Set current pen color to (0, 0, 0, 0).                       |
