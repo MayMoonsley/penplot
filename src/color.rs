@@ -1,4 +1,4 @@
-use fixed::{types::extra::U8, FixedU8};
+use fixed::{types::extra::U8, FixedU16};
 use std::convert::TryInto;
 use std::fmt::{self, Display, Formatter};
 
@@ -12,6 +12,15 @@ impl Display for Color {
     }
 }
 
+#[inline]
+fn fixed_to_byte(x: FixedU16<U8>) -> u8 {
+    if x > 255 {
+        255
+    } else {
+        x.to_bits() as u8
+    }
+}
+
 impl Color {
     pub fn transparent() -> Color {
         Color(0, 0, 0, 0)
@@ -21,8 +30,9 @@ impl Color {
         Some(Color(r.try_into().ok()?, g.try_into().ok()?, b.try_into().ok()?, a.try_into().ok()?))
     }
 
-    fn from_fixed(r: FixedU8<U8>, g: FixedU8<U8>, b: FixedU8<U8>, a: FixedU8<U8>) -> Color {
-        Color(r.to_bits(), g.to_bits(), b.to_bits(), a.to_bits())
+    #[inline]
+    fn from_fixed(r: FixedU16<U8>, g: FixedU16<U8>, b: FixedU16<U8>, a: FixedU16<U8>) -> Color {
+        Color(fixed_to_byte(r), fixed_to_byte(g), fixed_to_byte(b), fixed_to_byte(a))
     }
 
     pub fn overlay(top: Color, bottom: Color) -> Color {
@@ -30,9 +40,9 @@ impl Color {
             // avoid division by zero errors
             Color::transparent()
         } else {
-            let inv_alpha = FixedU8::<U8>::from_bits(255 - top.alpha());
+            let inv_alpha = FixedU16::<U8>::from_bits((255 - top.alpha()).into());
             let new_alpha = top.alpha_fixed() + bottom.alpha_fixed() * inv_alpha;
-            let scale = FixedU8::<U8>::from_bits(255) / new_alpha;
+            let scale = FixedU16::<U8>::from_bits(255) / new_alpha;
             Color::from_fixed(
                 (top.red_fixed() * top.alpha_fixed() + bottom.red_fixed() * bottom.alpha_fixed() * inv_alpha) * scale,
                 (top.green_fixed() * top.alpha_fixed() + bottom.green_fixed() * bottom.alpha_fixed() * inv_alpha) * scale,
@@ -63,22 +73,22 @@ impl Color {
     }
 
     #[inline]
-    fn red_fixed(&self) -> FixedU8<U8> {
-        FixedU8::from_bits(self.0)
+    fn red_fixed(&self) -> FixedU16<U8> {
+        FixedU16::from_bits(self.0.into())
     }
 
     #[inline]
-    fn green_fixed(&self) -> FixedU8<U8> {
-        FixedU8::from_bits(self.1)
+    fn green_fixed(&self) -> FixedU16<U8> {
+        FixedU16::from_bits(self.1.into())
     }
 
     #[inline]
-    fn blue_fixed(&self) -> FixedU8<U8> {
-        FixedU8::from_bits(self.2)
+    fn blue_fixed(&self) -> FixedU16<U8> {
+        FixedU16::from_bits(self.2.into())
     }
 
     #[inline]
-    fn alpha_fixed(&self) -> FixedU8<U8> {
-        FixedU8::from_bits(self.3)
+    fn alpha_fixed(&self) -> FixedU16<U8> {
+        FixedU16::from_bits(self.3.into())
     }
 }
