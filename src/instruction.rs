@@ -1,9 +1,7 @@
 use crate::color::Color;
-use crate::parse_instruction::parse_instruction;
-use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 pub enum Instruction {
     Noop,                   // do nothing
     Move(isize, isize),         // move to X, Y
@@ -41,31 +39,5 @@ impl Display for Instruction {
             Instruction::Repeat(i, n) => write!(f, "LOOP {} {}", i, n),
             Instruction::Halt => write!(f, "HALT"),
         }
-    }
-}
-
-impl Instruction {
-    pub fn parse_program(text: String) -> Option<Vec<Instruction>> {
-        let split: Vec<&str> = text.trim().split('\n').collect();
-        // generate symbol table
-        let mut symbol_table: HashMap<String, usize> = HashMap::new();
-        for (index, line) in split.iter().enumerate() {
-            let mut command = line.trim().split('@');
-            if let Some(label) = command.nth(1) {
-                symbol_table.insert(label.trim().to_string(), index);
-            }
-        }
-        // parse instructions
-        let mut program: Vec<Instruction> = vec![];
-        for string in split {
-            match parse_instruction(&symbol_table, string) {
-                Ok((_, inst)) => program.push(inst),
-                Err(e) => {
-                    println!("Error parsing code {:?}", e);
-                    return None;
-                }
-            }
-        }
-        Some(program)
     }
 }

@@ -1,6 +1,7 @@
 mod color;
 mod instruction;
-mod parse_instruction;
+mod l_system;
+mod parsing;
 mod program_state;
 
 use crate::instruction::Instruction;
@@ -58,7 +59,7 @@ struct RunArgs {
 impl RunArgs {
     fn run(&self) {
         let mut program = ProgramState::new(self.width, self.height);
-        let commands = Instruction::parse_program(
+        let commands = parsing::parse_program(
             fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
         );
         program.execute(commands.expect("Error parsing code"));

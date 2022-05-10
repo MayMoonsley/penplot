@@ -66,7 +66,7 @@ pub fn parse_instruction<'a>(symbol_table: &'a HashMap<String, usize>, input: &'
         instruction_word("RTRN", |_| Instruction::Return), // return
         instruction_word("BLOT", |_| Instruction::Blot), // blot
         instruction_word("HALT", |_| Instruction::Halt), // halt
-        instruction_word("BLNK", |_| Instruction::SetColor(Color(0.0, 0.0, 0.0, 0.0))), // blank
+        instruction_word("BLNK", |_| Instruction::SetColor(Color(0, 0, 0, 0))), // blank
         instruction_args("MOVE",
             sequence::separated_pair(parse_isize_value, complete::space1, parse_isize_value),
             |(x, y)| Instruction::Move(x, y)
@@ -127,4 +127,28 @@ pub fn parse_instruction<'a>(symbol_table: &'a HashMap<String, usize>, input: &'
             )
         ), // set color (RGB)
     ))(input)
+}
+
+pub fn parse_program(text: String) -> Option<Vec<Instruction>> {
+    let split: Vec<&str> = text.trim().split('\n').collect();
+    // generate symbol table
+    let mut symbol_table: HashMap<String, usize> = HashMap::new();
+    for (index, line) in split.iter().enumerate() {
+        let mut command = line.trim().split('@');
+        if let Some(label) = command.nth(1) {
+            symbol_table.insert(label.trim().to_string(), index);
+        }
+    }
+    // parse instructions
+    let mut program: Vec<Instruction> = vec![];
+    for string in split {
+        match parse_instruction(&symbol_table, string) {
+            Ok((_, inst)) => program.push(inst),
+            Err(e) => {
+                println!("Error parsing code {:?}", e);
+                return None;
+            }
+        }
+    }
+    Some(program)
 }

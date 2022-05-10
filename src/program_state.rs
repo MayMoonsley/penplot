@@ -17,12 +17,12 @@ pub struct ProgramState {
 
 impl ProgramState {
     pub fn new(width: usize, height: usize) -> ProgramState {
-        let buffer: Vec<Color> = vec![Color(0.0, 0.0, 0.0, 0.0); width * height];
+        let buffer: Vec<Color> = vec![Color(0, 0, 0, 0); width * height];
         ProgramState {
             pen_x: 0.0,
             pen_y: 0.0,
             heading: 0.0,
-            pen_color: Color(0.0, 0.0, 0.0, 0.0),
+            pen_color: Color(0, 0, 0, 0),
             width,
             height,
             buffer,
@@ -160,7 +160,7 @@ impl ProgramState {
         let w = self.width as isize;
         let h = self.height as isize;
         if x < 0 || y < 0 || x >= w || y >= h {
-            
+
         } else {
             let index = (x + y * w) as usize;
             self.buffer[index] = Color::overlay(self.pen_color, self.buffer[index]);
@@ -170,10 +170,11 @@ impl ProgramState {
     pub fn save_buffer(&self, filename: &str) {
         let mut bytes: Vec<u8> = vec![0; self.width * self.height * 4];
         for index in 0..self.width * self.height {
-            bytes[index * 4] = self.buffer[index].red_byte();
-            bytes[index * 4 + 1] = self.buffer[index].green_byte();
-            bytes[index * 4 + 2] = self.buffer[index].blue_byte();
-            bytes[index * 4 + 3] = self.buffer[index].alpha_byte();
+            let Color(r, g, b, a) = self.buffer[index];
+            bytes[index * 4] = r;
+            bytes[index * 4 + 1] = g;
+            bytes[index * 4 + 2] = b;
+            bytes[index * 4 + 3] = a;
         }
         image::save_buffer(
             filename,
