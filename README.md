@@ -4,7 +4,7 @@ An assembly-like vector graphics toy, inspired by [Atari arcade vector hardware]
 
 ## Building / Usage
 
-Build with `cargo +nightly build`. The program takes two command line arguments. The first is the
+Build with `cargo build`. The program takes two command line arguments. The first is the
 filename of the code you want to run; the second is the filename you want the resulting image to be
 saved to.
 
@@ -17,11 +17,9 @@ saved to.
 | `SHFT dx dy`   | Move the pen head over by (dx, dy).                          |
 | `WALK d`       | Move the pen head forward d pixels.                          |
 | `FACE t`       | Set current heading to t degrees.                            |
-| `FCE% p`       | Set current heading to p * 360.                              |
 | `TURN t`       | Turn counterclockwise t degrees.                             |
-| `TRN% p`       | Turn counterclockwise p * 360 degrees.                       |
 | `RGBA r g b a` | Set current pen color to (r, g, b, a).                       |
-| `RGBA hex`     | Set current pen color to specified hex code.                 |
+| `RGB r g b`   | Set current pen color to (r, g, b, 255).                      |
 | `BLNK`         | Set current pen color to (0, 0, 0, 0).                       |
 | `BLOT`         | Set current pixel to pen color.                              |
 | `GOTO add`     | Go to specified address.                                     |
