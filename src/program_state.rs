@@ -37,7 +37,7 @@ impl ProgramState {
         self.executing = true;
         while self.executing {
             self.program_counter = match commands.get(self.program_counter) {
-                Some(command) => self.exec_instruction(&command),
+                Some(command) => self.exec_instruction(command),
                 None => break,
             }
         }
@@ -160,7 +160,7 @@ impl ProgramState {
         let w = self.width as isize;
         let h = self.height as isize;
         if x < 0 || y < 0 || x >= w || y >= h {
-            return;
+            
         } else {
             let index = (x + y * w) as usize;
             self.buffer[index] = Color::overlay(self.pen_color, self.buffer[index]);

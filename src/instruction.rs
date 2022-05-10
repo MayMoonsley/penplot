@@ -49,10 +49,10 @@ impl Instruction {
         let split: Vec<&str> = text.trim().split('\n').collect();
         // generate symbol table
         let mut symbol_table: HashMap<String, usize> = HashMap::new();
-        for i in 0..split.len() {
-            let mut command = split[i].split('@');
+        for (index, line) in split.iter().enumerate() {
+            let mut command = line.trim().split('@');
             if let Some(label) = command.nth(1) {
-                symbol_table.insert(label.trim().to_string(), i);
+                symbol_table.insert(label.trim().to_string(), index);
             }
         }
         // parse instructions

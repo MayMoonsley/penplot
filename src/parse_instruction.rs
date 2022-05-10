@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use nom::IResult;
-use nom::{branch, bytes::complete::{tag_no_case, take_while}, character, character::complete, combinator, sequence};
+use nom::{branch, bytes::complete::{tag_no_case, take_while}, character::complete, combinator, sequence};
 use crate::color::Color;
 use crate::instruction::Instruction;
 
@@ -22,7 +22,7 @@ fn parse_isize_value(input: &str) -> IResult<&str, isize> {
 fn parse_address<'a>(symbol_table: &'a HashMap<String, usize>) -> impl FnMut(&'a str) -> IResult<&'a str, usize> {
     branch::alt((
         combinator::map(complete::u32, |x| x as usize), // a literal usize value
-        combinator::map_opt(complete::alpha1, move |tag| symbol_table.get(tag).map(|&x| x)) // a label
+        combinator::map_opt(complete::alpha1, move |tag| symbol_table.get(tag).copied()) // a label
     ))
 }
 
@@ -77,27 +77,27 @@ pub fn parse_instruction<'a>(symbol_table: &'a HashMap<String, usize>, input: &'
         ), // move relative
         instruction_args("WALK",
             parse_isize_value,
-            |len| Instruction::MoveForward(len)
+            Instruction::MoveForward
         ), // move relative
         instruction_args("FACE",
             parse_isize_value,
-            |theta| Instruction::Face(theta)
+            Instruction::Face
         ), // face
         instruction_args("TURN",
             parse_isize_value,
-            |theta| Instruction::Turn(theta)
+            Instruction::Turn
         ), // face
         instruction_args("GOTO",
             parse_address(symbol_table),
-            |addr| Instruction::Goto(addr)
+            Instruction::Goto
         ), // goto
         instruction_args("CALL",
             parse_address(symbol_table),
-            |addr| Instruction::Call(addr)
+            Instruction::Call
         ), // call
         instruction_args("JUMP",
             parse_isize_value,
-            |dist| Instruction::Jump(dist)
+            Instruction::Jump
         ), // jump
         instruction_args("LOOP",
             sequence::separated_pair(parse_address(symbol_table), complete::space1, parse_usize_value),

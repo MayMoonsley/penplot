@@ -10,10 +10,10 @@ use std::io::Result as IoResult;
 use std::io::Write;
 use clap::{Args, Parser, Subcommand};
 
-fn save_program(code: &Vec<Instruction>, filename: &str) -> IoResult<()> {
+fn save_program(code: &[Instruction], filename: &str) -> IoResult<()> {
     let mut buffer = File::create(filename)?;
     for line in code {
-        write!(buffer, "{}\n", line)?;
+        writeln!(buffer, "{}", line)?;
     }
     Ok(())
 }
