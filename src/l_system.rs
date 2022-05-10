@@ -1,23 +1,17 @@
 use crate::instruction::Instruction;
+use crate::util;
 use std::collections::HashMap;
 
 pub struct LSystem {
     pub seed: Vec<Instruction>,
-    pub rules: HashMap<Instruction, Vec<Instruction>>
+    pub rules: HashMap<Instruction, Vec<Instruction>>,
+    pub aliases: Option<HashMap<Instruction, Vec<Instruction>>>
 }
 
 impl LSystem {
     // advance the L system by one step
     fn advance(&self, input: Vec<Instruction>) -> Vec<Instruction> {
-        let mut result = vec![];
-        for inst in input.into_iter() {
-            if let Some(rule) = self.rules.get(&inst) {
-                result.extend(rule.clone());
-            } else {
-                result.push(inst);
-            }
-        }
-        result
+        util::replace(input, &self.rules)
     }
 
     pub fn run(&self, iters: usize) -> Vec<Instruction> {
@@ -25,6 +19,10 @@ impl LSystem {
         for _ in 0..iters {
             acc = self.advance(acc);
         }
-        acc
+        if let Some(aliases) = &self.aliases {
+            util::replace(acc, aliases)
+        } else {
+            acc
+        }
     }
 }

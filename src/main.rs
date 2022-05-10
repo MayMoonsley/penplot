@@ -3,6 +3,7 @@ mod instruction;
 mod l_system;
 mod parsing;
 mod program_state;
+mod util;
 
 use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
@@ -85,12 +86,14 @@ struct FractalArgs {
 
 impl FractalArgs {
     fn run(&self) {
-        if let Some(l_system) = parsing::parse_l_system(
+        match parsing::parse_l_system(
             &fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
         ) {
-            save_program(&l_system.run(self.count), &self.output);
-        } else {
-            println!("L system could not be parsed");
+            Ok((_, l_system)) => {
+                save_program(&l_system.run(self.count), &self.output).expect("Error saving program");
+                println!("Program written successfully.");
+            }
+            Err(e) => println!("L system could not be parsed (error {:?})", e)
         }
     }
 }

@@ -109,10 +109,10 @@ pub fn parse_instruction<'a>(symbol_table: Option<&'a HashMap<String, usize>>, i
             sequence::separated_pair(parse_address(symbol_table), complete::space1, parse_usize_value),
             |(addr, num)| Instruction::Repeat(addr, num)
         ), // loop
-        instruction_args(";",
-            take_while(is_valid_comment_char),
+        combinator::map(
+            sequence::preceded(complete::char(';'), take_while(is_valid_comment_char)),
             |s: &str| Instruction::Comment(s.trim().to_string())
-        ), // comments
+        ), // comment
         instruction_args_opt("RGBA",
             sequence::separated_pair(
                 sequence::separated_pair(parse_usize_value, complete::space1, parse_usize_value),
@@ -132,6 +132,10 @@ pub fn parse_instruction<'a>(symbol_table: Option<&'a HashMap<String, usize>>, i
                 Instruction::SetColor(Color::from_ints(r, g, b, 255)?)
             )
         ), // set color (RGB)
+        combinator::map(
+            sequence::delimited(complete::char('<'), complete::anychar, complete::char('>')),
+            |c| Instruction::Comment(c.to_string())
+        ) // comment (single-char)
     ))(input)
 }
 
@@ -174,9 +178,25 @@ fn parse_l_system_value(input: &str) -> IResult<&str, Vec<Instruction>> {
 }
 
 fn parse_seed(input: &str) -> IResult<&str, Vec<Instruction>> {
-    sequence::preceded(
+    sequence::delimited(
         sequence::pair(tag_no_case("seed"), complete::multispace1),
-        parse_l_system_value
+        parse_l_system_value,
+        complete::multispace0
+    )(input)
+}
+
+fn parse_aliases(input: &str) -> IResult<&str, HashMap<Instruction, Vec<Instruction>>> {
+    sequence::delimited(
+        sequence::pair(tag_no_case("aliases"), complete::multispace1),
+        sequence::delimited(
+            sequence::pair(complete::char('{'), complete::multispace1),
+            multi::fold_many1(sequence::terminated(parse_rule, complete::multispace0), HashMap::new, |mut map, (inst, rule)| {
+                map.insert(inst, rule);
+                map
+            }),
+            sequence::pair(complete::multispace0, complete::char('}'))
+        ),
+        complete::multispace0
     )(input)
 }
 
@@ -188,20 +208,19 @@ fn parse_rule(input: &str) -> IResult<&str, (Instruction, Vec<Instruction>)> {
     )(input)
 }
 
-pub fn parse_l_system(input: &str) -> Option<LSystem> {
-    match sequence::separated_pair(
-        parse_seed,
-        complete::multispace1,
-        multi::fold_many1(parse_rule, HashMap::new, |mut map, (inst, rule)| {
-            map.insert(inst, rule);
-            map
-        })
-    )(input) {
-        Ok((_, (seed, rules))) => Some(LSystem { seed, rules }),
-        Err(e) => {
-            println!("Error parsing L system {:?}", e);
-            None
-        }
-    }
-
+pub fn parse_l_system(input: &str) -> IResult<&str, LSystem> {
+    // get the parameters in sequence
+    let (input, seed) = parse_seed(input)?;
+    // there might be a cleaner way to do this, but the idea is to allow aliases to exist here, but accept if they don't
+    let (input, aliases) = match parse_aliases(input) {
+        Ok((input, aliases)) => (input, Some(aliases)),
+        Err(e) => (input, None)
+    };
+    // then we parse the rules...
+    let (input, rules) = multi::fold_many1(parse_rule, HashMap::new, |mut map, (inst, rule)| {
+        map.insert(inst, rule);
+        map
+    })(input)?;
+    // and then we're done
+    Ok((input, LSystem { seed, rules, aliases }))
 }
