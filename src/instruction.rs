@@ -1,7 +1,7 @@
 use crate::color::Color;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, Clone, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Instruction {
     Noop,                   // do nothing
     Move(isize, isize),         // move to X, Y

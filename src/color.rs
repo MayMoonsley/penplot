@@ -2,7 +2,7 @@ use fixed::{types::extra::U8, FixedU8};
 use std::convert::TryInto;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Copy, Clone, Debug, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Color(pub u8, pub u8, pub u8, pub u8); // RGBA in [0, 255]
 
 impl Display for Color {
