@@ -4,9 +4,9 @@ HALT
 ; functions live down here
 WALK 16 @ line
 WALK -16
-TRN% 0.1
+TURN 36
 RTRN
-RGBA #FFFFFF @ tuft
+RGB 255 255 255 @ tuft
 LOOP line 4
 BLNK
 SHFT 32 0

@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::fmt::{self, Display, Formatter};
 use std::num::ParseIntError;
 use std::str::FromStr;
@@ -18,6 +19,15 @@ impl Display for Color {
 }
 
 impl Color {
+    pub fn from_bytes(r: u8, g: u8, b: u8, a: u8) -> Color {
+        let (r, g, b, a) = (r as f32, g as f32, b as f32, a as f32);
+        Color(r / 255.0, g / 255.0, b / 255.0, a / 255.0)
+    }
+
+    pub fn from_ints(r: usize, g: usize, b: usize, a: usize) -> Option<Color> {
+        Some(Color::from_bytes(r.try_into().ok()?, g.try_into().ok()?, b.try_into().ok()?, a.try_into().ok()?))
+    }
+
     pub fn overlay(top: Color, bottom: Color) -> Color {
         if top.alpha() == 0.0 && bottom.alpha() == 0.0 {
             // avoid division by zero errors
