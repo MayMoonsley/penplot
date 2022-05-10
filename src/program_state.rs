@@ -17,12 +17,12 @@ pub struct ProgramState {
 
 impl ProgramState {
     pub fn new(width: usize, height: usize) -> ProgramState {
-        let buffer: Vec<Color> = vec![Color(0, 0, 0, 0); width * height];
+        let buffer: Vec<Color> = vec![Color::transparent(); width * height];
         ProgramState {
             pen_x: 0.0,
             pen_y: 0.0,
             heading: 0.0,
-            pen_color: Color(0, 0, 0, 0),
+            pen_color: Color(0, 0, 0, 255),
             width,
             height,
             buffer,

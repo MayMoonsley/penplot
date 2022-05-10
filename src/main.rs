@@ -29,14 +29,16 @@ struct Command {
 impl Command {
     fn run(&self) {
         match &self.which {
-            PenplotCommand::Run(args) => args.run()
+            PenplotCommand::Run(args) => args.run(),
+            PenplotCommand::Fractal(args) => args.run()
         }
     }
 }
 
 #[derive(Subcommand)]
 enum PenplotCommand {
-    Run(RunArgs)
+    Run(RunArgs),
+    Fractal(FractalArgs)
 }
 
 /// Run a specified program and render its output to file.
@@ -64,6 +66,32 @@ impl RunArgs {
         );
         program.execute(commands.expect("Error parsing code"));
         program.save_buffer(&self.output);
+    }
+}
+
+/// Iterate a specified L system and save its code output to a file
+#[derive(Args)]
+struct FractalArgs {
+    /// Filename of L system specification
+    #[clap(short, long)]
+    input: String,
+    #[clap(short, long)]
+    /// Filename to save the resulting code as
+    output: String,
+    #[clap(short, long)]
+    /// Number of times to run
+    count: usize
+}
+
+impl FractalArgs {
+    fn run(&self) {
+        if let Some(l_system) = parsing::parse_l_system(
+            &fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
+        ) {
+            save_program(&l_system.run(self.count), &self.output);
+        } else {
+            println!("L system could not be parsed");
+        }
     }
 }
 

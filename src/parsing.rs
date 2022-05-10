@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use nom::IResult;
-use nom::{branch, bytes::complete::{tag_no_case, take_while}, character::complete, combinator, sequence};
+use nom::{branch, bytes::complete::{tag_no_case, take_while}, character::complete, combinator, multi, sequence};
 use crate::color::Color;
 use crate::instruction::Instruction;
+use crate::l_system::LSystem;
 
 // predicate for if a char can go in a comment
 // this is every char except line ending chars (/r, /n) and the labeling char (@)
@@ -19,10 +20,16 @@ fn parse_isize_value(input: &str) -> IResult<&str, isize> {
     complete::i32(input).map(|(x, y)| (x, y as isize))
 }
 
-fn parse_address<'a>(symbol_table: &'a HashMap<String, usize>) -> impl FnMut(&'a str) -> IResult<&'a str, usize> {
+fn parse_address<'a>(symbol_table: Option<&'a HashMap<String, usize>>) -> impl FnMut(&'a str) -> IResult<&'a str, usize> {
     branch::alt((
         combinator::map(complete::u32, |x| x as usize), // a literal usize value
-        combinator::map_opt(complete::alpha1, move |tag| symbol_table.get(tag).copied()) // a label
+        combinator::map_opt(complete::alpha1, move |tag| {
+            if let Some(symbol_table) = symbol_table {
+                symbol_table.get(tag).copied()
+            } else {
+                None
+            }
+        }) // a label
     ))
 }
 
@@ -59,8 +66,7 @@ fn instruction_word<'a, F: Fn(&'a str) -> Instruction>(name: &'static str, instr
     combinator::map(tag_no_case(name), instruction)
 }
 
-// TODO: there's gotta be a way to avoid all this code repetition
-pub fn parse_instruction<'a>(symbol_table: &'a HashMap<String, usize>, input: &'a str) -> IResult<&'a str, Instruction> {
+pub fn parse_instruction<'a>(symbol_table: Option<&'a HashMap<String, usize>>, input: &'a str) -> IResult<&'a str, Instruction> {
     branch::alt((
         instruction_word("NOOP", |_| Instruction::Noop), // no-op
         instruction_word("RTRN", |_| Instruction::Return), // return
@@ -129,6 +135,11 @@ pub fn parse_instruction<'a>(symbol_table: &'a HashMap<String, usize>, input: &'
     ))(input)
 }
 
+fn parse_instruction_symless(input: &str) -> IResult<&str, Instruction> {
+    parse_instruction(None, input)
+}
+
+// TODO: these need to return proper errors
 pub fn parse_program(text: String) -> Option<Vec<Instruction>> {
     let split: Vec<&str> = text.trim().split('\n').collect();
     // generate symbol table
@@ -142,7 +153,7 @@ pub fn parse_program(text: String) -> Option<Vec<Instruction>> {
     // parse instructions
     let mut program: Vec<Instruction> = vec![];
     for string in split {
-        match parse_instruction(&symbol_table, string) {
+        match parse_instruction(Some(&symbol_table), string) {
             Ok((_, inst)) => program.push(inst),
             Err(e) => {
                 println!("Error parsing code {:?}", e);
@@ -151,4 +162,46 @@ pub fn parse_program(text: String) -> Option<Vec<Instruction>> {
         }
     }
     Some(program)
+}
+
+// this parses the big curly-brace delimited
+fn parse_l_system_value(input: &str) -> IResult<&str, Vec<Instruction>> {
+    sequence::delimited(
+        sequence::pair(complete::char('{'), complete::multispace1),
+        multi::many1(sequence::terminated(parse_instruction_symless, complete::multispace1)),
+        sequence::pair(complete::multispace0, complete::char('}'))
+    )(input)
+}
+
+fn parse_seed(input: &str) -> IResult<&str, Vec<Instruction>> {
+    sequence::preceded(
+        sequence::pair(tag_no_case("seed"), complete::multispace1),
+        parse_l_system_value
+    )(input)
+}
+
+fn parse_rule(input: &str) -> IResult<&str, (Instruction, Vec<Instruction>)> {
+    sequence::separated_pair(
+        parse_instruction_symless,
+        complete::multispace1,
+        parse_l_system_value
+    )(input)
+}
+
+pub fn parse_l_system(input: &str) -> Option<LSystem> {
+    match sequence::separated_pair(
+        parse_seed,
+        complete::multispace1,
+        multi::fold_many1(parse_rule, HashMap::new, |mut map, (inst, rule)| {
+            map.insert(inst, rule);
+            map
+        })
+    )(input) {
+        Ok((_, (seed, rules))) => Some(LSystem { seed, rules }),
+        Err(e) => {
+            println!("Error parsing L system {:?}", e);
+            None
+        }
+    }
+
 }

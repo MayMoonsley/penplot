@@ -29,7 +29,7 @@ impl Display for Instruction {
             Instruction::MoveForward(n) => write!(f, "WALK {}", n),
             Instruction::Face(theta) => write!(f, "FACE {}", theta),
             Instruction::Turn(dt) => write!(f, "TURN {}", dt),
-            Instruction::SetColor(color) => write!(f, "RGBA {}", color),
+            Instruction::SetColor(color) => write!(f, "RGBA {} {} {} {}", color.0, color.1, color.2, color.3),
             Instruction::Blot => write!(f, "BLOT"),
             Instruction::Comment(s) => write!(f, "; {}", s),
             Instruction::Goto(i) => write!(f, "GOTO {}", i),
