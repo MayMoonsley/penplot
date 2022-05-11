@@ -173,7 +173,7 @@ fn parse_l_system_value(input: &str) -> IResult<&str, Vec<Instruction>> {
     sequence::delimited(
         sequence::pair(complete::char('{'), complete::multispace1),
         multi::many1(sequence::terminated(parse_instruction_symless, complete::multispace1)),
-        sequence::pair(complete::multispace0, complete::char('}'))
+        sequence::delimited(complete::multispace0, complete::char('}'), complete::multispace0)
     )(input)
 }
 
@@ -194,7 +194,7 @@ fn parse_aliases(input: &str) -> IResult<&str, HashMap<Instruction, Vec<Instruct
                 map.insert(inst, rule);
                 map
             }),
-            sequence::pair(complete::multispace0, complete::char('}'))
+            sequence::delimited(complete::multispace0, complete::char('}'), complete::multispace0)
         ),
         complete::multispace0
     )(input)
@@ -216,6 +216,7 @@ pub fn parse_l_system(input: &str) -> IResult<&str, LSystem> {
         Ok((input, aliases)) => (input, Some(aliases)),
         Err(e) => (input, None)
     };
+    println!("{}", input);
     // then we parse the rules...
     let (input, rules) = multi::fold_many1(parse_rule, HashMap::new, |mut map, (inst, rule)| {
         map.insert(inst, rule);

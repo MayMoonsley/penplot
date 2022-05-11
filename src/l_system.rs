@@ -15,6 +15,14 @@ impl LSystem {
     }
 
     pub fn run(&self, iters: usize) -> Vec<Instruction> {
+        // for (key, value) in &self.rules {
+        //     println!("{} -> {:?}", key, value);
+        // }
+        // if let Some(aliases) = &self.aliases {
+        //     for (key, value) in aliases {
+        //         println!("{} -> {:?}", key, value);
+        //     }
+        // }
         let mut acc = self.seed.clone();
         for _ in 0..iters {
             acc = self.advance(acc);
