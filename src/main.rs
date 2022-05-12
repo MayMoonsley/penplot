@@ -1,4 +1,5 @@
 #![feature(stdin_forwarders)]
+mod canvas;
 mod color;
 mod instruction;
 mod l_system;
@@ -6,6 +7,7 @@ mod parsing;
 mod program_state;
 mod util;
 
+use crate::canvas::PixelCanvas;
 use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
 use std::fs::{self, File};
@@ -71,7 +73,7 @@ struct RunArgs {
 
 impl RunArgs {
     fn run(&self) {
-        let mut program = ProgramState::new(self.width, self.height);
+        let mut program: ProgramState<PixelCanvas> = ProgramState::new(self.width, self.height);
         let source_code = if let Some(filename) = &self.input {
             fs::read_to_string(filename).expect("Something went wrong reading the file")
         } else {
@@ -79,7 +81,7 @@ impl RunArgs {
         };
         let commands = parsing::parse_program(source_code);
         program.execute(commands.expect("Error parsing code"));
-        program.save_buffer(&self.output);
+        program.save_canvas(&self.output);
     }
 }
 
