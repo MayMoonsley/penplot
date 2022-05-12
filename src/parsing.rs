@@ -214,7 +214,7 @@ pub fn parse_l_system(input: &str) -> IResult<&str, LSystem> {
     // there might be a cleaner way to do this, but the idea is to allow aliases to exist here, but accept if they don't
     let (input, aliases) = match parse_aliases(input) {
         Ok((input, aliases)) => (input, Some(aliases)),
-        Err(e) => (input, None)
+        Err(_) => (input, None)
     };
     println!("{}", input);
     // then we parse the rules...

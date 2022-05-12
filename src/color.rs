@@ -74,21 +74,21 @@ impl Color {
 
     #[inline]
     fn red_fixed(&self) -> FixedU16<U8> {
-        FixedU16::from_bits(self.0.into())
+        FixedU16::from_bits(self.red().into())
     }
 
     #[inline]
     fn green_fixed(&self) -> FixedU16<U8> {
-        FixedU16::from_bits(self.1.into())
+        FixedU16::from_bits(self.green().into())
     }
 
     #[inline]
     fn blue_fixed(&self) -> FixedU16<U8> {
-        FixedU16::from_bits(self.2.into())
+        FixedU16::from_bits(self.blue().into())
     }
 
     #[inline]
     fn alpha_fixed(&self) -> FixedU16<U8> {
-        FixedU16::from_bits(self.3.into())
+        FixedU16::from_bits(self.alpha().into())
     }
 }
