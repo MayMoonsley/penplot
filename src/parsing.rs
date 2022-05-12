@@ -216,7 +216,6 @@ pub fn parse_l_system(input: &str) -> IResult<&str, LSystem> {
         Ok((input, aliases)) => (input, Some(aliases)),
         Err(_) => (input, None)
     };
-    println!("{}", input);
     // then we parse the rules...
     let (input, rules) = multi::fold_many1(parse_rule, HashMap::new, |mut map, (inst, rule)| {
         map.insert(inst, rule);

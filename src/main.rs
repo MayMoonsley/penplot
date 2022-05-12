@@ -1,3 +1,4 @@
+#![feature(stdin_forwarders)]
 mod color;
 mod instruction;
 mod l_system;
@@ -9,7 +10,7 @@ use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
 use std::fs::{self, File};
 use std::io::Result as IoResult;
-use std::io::Write;
+use std::io::{self, Write};
 use clap::{Args, Parser, Subcommand};
 
 fn save_program(code: &[Instruction], filename: &str) -> IoResult<()> {
@@ -18,6 +19,15 @@ fn save_program(code: &[Instruction], filename: &str) -> IoResult<()> {
         writeln!(buffer, "{}", line)?;
     }
     Ok(())
+}
+
+fn read_stdin_to_string() -> String {
+    let mut acc = String::new();
+    for line in io::stdin().lines() {
+        acc.push_str(&line.unwrap()); // append the line
+        acc.push('\n'); // then append a newline (since lines() removes them)
+    }
+    acc
 }
 
 #[derive(Parser)]
@@ -45,9 +55,9 @@ enum PenplotCommand {
 /// Run a specified program and render its output to file.
 #[derive(Args)]
 struct RunArgs {
-    /// Filename of source code to run
+    /// Filename of source code to run (if omitted, use stdin)
     #[clap(short, long)]
-    input: String,
+    input: Option<String>,
     #[clap(short, long)]
     /// Filename to save the resulting image as
     output: String,
@@ -62,9 +72,12 @@ struct RunArgs {
 impl RunArgs {
     fn run(&self) {
         let mut program = ProgramState::new(self.width, self.height);
-        let commands = parsing::parse_program(
-            fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
-        );
+        let source_code = if let Some(filename) = &self.input {
+            fs::read_to_string(filename).expect("Something went wrong reading the file")
+        } else {
+            read_stdin_to_string()
+        };
+        let commands = parsing::parse_program(source_code);
         program.execute(commands.expect("Error parsing code"));
         program.save_buffer(&self.output);
     }
@@ -73,12 +86,12 @@ impl RunArgs {
 /// Iterate a specified L system and save its code output to a file
 #[derive(Args)]
 struct FractalArgs {
-    /// Filename of L system specification
+    /// Filename of L system specification (if omitted, use stdin)
     #[clap(short, long)]
-    input: String,
+    input: Option<String>,
     #[clap(short, long)]
-    /// Filename to save the resulting code as
-    output: String,
+    /// Filename to save the resulting code as (if omitted, use stdout)
+    output: Option<String>,
     #[clap(short, long)]
     /// Number of times to run
     count: usize
@@ -86,12 +99,21 @@ struct FractalArgs {
 
 impl FractalArgs {
     fn run(&self) {
-        match parsing::parse_l_system(
-            &fs::read_to_string(&self.input).expect("Something went wrong reading the file"),
-        ) {
+        let system_spec = if let Some(filename) = &self.input {
+            fs::read_to_string(filename).expect("Something went wrong reading the file")
+        } else {
+            read_stdin_to_string()
+        };
+        match parsing::parse_l_system(&system_spec) {
             Ok((_, l_system)) => {
-                save_program(&l_system.run(self.count), &self.output).expect("Error saving program");
-                println!("Program written successfully.");
+                let program = l_system.run(self.count);
+                if let Some(filename) = &self.output {
+                    save_program(&program, filename).expect("Error saving program");
+                } else {
+                    for inst in program {
+                        println!("{}", inst);
+                    }
+                }
             }
             Err(e) => println!("L system could not be parsed (error {:?})", e)
         }
