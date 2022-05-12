@@ -1,0 +1,18 @@
+seed {
+    BLNK
+    MOVE 0 512
+    RGB 255 255 255
+    WALK 2
+}
+
+WALK 2 {
+    WALK 2
+    TURN -90
+    WALK 2
+    TURN 90
+    WALK 2
+    TURN 90
+    WALK 2
+    TURN -90
+    WALK 2
+}

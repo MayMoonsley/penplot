@@ -1,0 +1,32 @@
+seed {
+    BLNK
+    MOVE 0 511
+    RGB 255 255 255
+    <A>
+}
+
+aliases {
+    <A> {
+        WALK 8
+    }
+
+    <B> {
+        WALK 8
+    }
+}
+
+<A> {
+    <B>
+    TURN 60
+    <A>
+    TURN 60
+    <B>
+}
+
+<B> {
+    <A>
+    TURN -60
+    <B>
+    TURN -60
+    <A>
+}
