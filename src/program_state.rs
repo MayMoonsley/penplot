@@ -47,7 +47,10 @@ impl<T: DrawingCanvas> ProgramState<T> {
                 None
             }
             Instruction::MoveRel(dx, dy) => {
-                self.canvas.move_pen_to(self.pen_x + *dx as f32, self.pen_y + *dy as f32);
+                let (dx, dy) = (*dx as f32, *dy as f32);
+                self.canvas.move_pen_to(self.pen_x + dx, self.pen_y + dy);
+                self.pen_x += dx;
+                self.pen_y += dy;
                 None
             }
             Instruction::MoveForward(dist) => {
