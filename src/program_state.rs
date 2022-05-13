@@ -40,7 +40,10 @@ impl<T: DrawingCanvas> ProgramState<T> {
         let new_pc: Option<usize> = match command {
             Instruction::Noop => None,
             Instruction::Move(x, y) => {
-                self.canvas.move_pen_to(*x as f32, *y as f32);
+                let (x, y) = (*x as f32, *y as f32);
+                self.canvas.move_pen_to(x, y);
+                self.pen_x = x;
+                self.pen_y = y;
                 None
             }
             Instruction::MoveRel(dx, dy) => {
@@ -52,6 +55,8 @@ impl<T: DrawingCanvas> ProgramState<T> {
                 let dx = dist * self.heading.cos();
                 let dy = dist * self.heading.sin();
                 self.canvas.move_pen_to(self.pen_x + dx, self.pen_y + dy);
+                self.pen_x += dx;
+                self.pen_y += dy;
                 None
             }
             Instruction::Face(theta) => {
