@@ -24,7 +24,7 @@ impl<T: DrawingCanvas> ProgramState<T> {
         }
     }
 
-    pub fn execute(&mut self, commands: Vec<Instruction>) {
+    pub fn execute(&mut self, commands: &[Instruction]) {
         self.program_counter = 0;
         self.executing = true;
         while self.executing {

@@ -80,7 +80,7 @@ impl RunArgs {
             read_stdin_to_string()
         };
         let commands = parsing::parse_program(source_code);
-        program.execute(commands.expect("Error parsing code"));
+        program.execute(&commands.expect("Error parsing code"));
         program.save_canvas(&self.output);
     }
 }
