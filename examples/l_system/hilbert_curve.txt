@@ -1,0 +1,32 @@
+seed {
+    RGB 255 255 255
+    <A>
+}
+
+<A> {
+    TURN 90
+    <B>
+    WALK 4
+    TURN -90
+    <A>
+    WALK 4
+    <A>
+    TURN -90
+    WALK 4
+    <B>
+    TURN 90
+}
+
+<B> {
+    TURN -90
+    <A>
+    WALK 4
+    TURN 90
+    <B>
+    WALK 4
+    <B>
+    TURN 90
+    WALK 4
+    <A>
+    TURN -90
+}
