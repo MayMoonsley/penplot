@@ -12,7 +12,11 @@ pub trait DrawingCanvas {
 
     // set pen color
     fn set_color(&mut self, color: Color);
+}
 
+// trait for canvases that can be saved
+// this is distinct from DrawingCanvas because of SizingCanvas
+pub trait SaveableCanvas {
     // save to a file
     fn save(&self, filename: &str);
 }
@@ -106,7 +110,9 @@ impl DrawingCanvas for PixelCanvas {
     fn set_color(&mut self, color: Color) {
         self.pen_color = color;
     }
+}
 
+impl SaveableCanvas for PixelCanvas {
     fn save(&self, filename: &str) {
         let mut bytes: Vec<u8> = vec![0; self.width * self.height * 4];
         for index in 0..self.width * self.height {

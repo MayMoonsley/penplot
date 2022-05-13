@@ -1,4 +1,4 @@
-use crate::canvas::DrawingCanvas;
+use crate::canvas::{DrawingCanvas, SaveableCanvas};
 use crate::instruction::Instruction;
 
 pub struct ProgramState<T: DrawingCanvas> {
@@ -111,7 +111,9 @@ impl<T: DrawingCanvas> ProgramState<T> {
             Some(pc) => pc,
         }
     }
+}
 
+impl<T: DrawingCanvas + SaveableCanvas> ProgramState<T> {
     pub fn save_canvas(&self, filename: &str) {
         self.canvas.save(filename);
     }
