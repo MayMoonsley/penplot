@@ -73,7 +73,8 @@ struct RunArgs {
 
 impl RunArgs {
     fn run(&self) {
-        let mut program: ProgramState<PixelCanvas> = ProgramState::new(self.width, self.height);
+        let canvas = PixelCanvas::new(self.width, self.height);
+        let mut program = ProgramState::new(canvas);
         let source_code = if let Some(filename) = &self.input {
             fs::read_to_string(filename).expect("Something went wrong reading the file")
         } else {

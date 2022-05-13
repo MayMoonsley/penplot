@@ -12,12 +12,12 @@ pub struct ProgramState<T: DrawingCanvas> {
 }
 
 impl<T: DrawingCanvas> ProgramState<T> {
-    pub fn new(width: usize, height: usize) -> ProgramState<T> {
+    pub fn new(canvas: T) -> ProgramState<T> {
         ProgramState {
+            canvas,
             pen_x: 0.0,
             pen_y: 0.0,
             heading: 0.0,
-            canvas: T::init(width, height, 0.0, 0.0),
             program_counter: 0,
             executing: true,
             call_stack: vec![],

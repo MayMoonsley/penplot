@@ -4,9 +4,6 @@ use std::cmp::Ordering;
 // trait for drawing canvases, allowing us to abstract over drawing SVGs and PNGs
 // the trait only exposes things the program state cares about, allowing it to stop worrying about implementation
 pub trait DrawingCanvas {
-    // create a new canvas given these params
-    fn init(width: usize, height: usize, pen_x: f32, pen_y: f32) -> Self;
-
     // put pen on a specific coordinate
     fn move_pen_to(&mut self, x: f32, y: f32);
 
@@ -31,6 +28,16 @@ pub struct PixelCanvas {
 }
 
 impl PixelCanvas {
+    pub fn new(width: usize, height: usize) -> Self {
+        PixelCanvas {
+            width, height,
+            pen_x: 0.0,
+            pen_y: 0.0,
+            pen_color: Color::transparent(),
+            buffer: vec![Color::transparent(); width * height]
+        }
+    }
+
     fn draw_pixel_f(&mut self, x: f32, y: f32) {
         self.draw_pixel_i(x.round() as isize, y.round() as isize);
     }
@@ -78,14 +85,6 @@ impl PixelCanvas {
 }
 
 impl DrawingCanvas for PixelCanvas {
-    fn init(width: usize, height: usize, pen_x: f32, pen_y: f32) -> Self {
-        PixelCanvas {
-            width, height, pen_x, pen_y,
-            pen_color: Color::transparent(),
-            buffer: vec![Color::transparent(); width * height]
-        }
-    }
-
     fn move_pen_to(&mut self, new_x: f32, new_y: f32) {
         if self.pen_color != Color::transparent() {
             self.plot_line(
