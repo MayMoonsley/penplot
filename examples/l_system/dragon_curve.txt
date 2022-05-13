@@ -1,6 +1,4 @@
 seed {
-    BLNK
-    MOVE 255 255
     RGB 255 255 255
     <F>
 }

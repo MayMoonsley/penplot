@@ -7,7 +7,7 @@ mod parsing;
 mod program_state;
 mod util;
 
-use crate::canvas::PixelCanvas;
+use crate::canvas::{PixelCanvas, SizingCanvas};
 use crate::instruction::Instruction;
 use crate::program_state::ProgramState;
 use std::fs::{self, File};
@@ -64,24 +64,38 @@ struct RunArgs {
     /// Filename to save the resulting image as
     output: String,
     /// Width of canvas
-    #[clap(long, default_value_t = 512)]
-    width: usize,
+    #[clap(long)]
+    width: Option<usize>,
     /// Height of canvas
-    #[clap(long, default_value_t = 512)]
-    height: usize
+    #[clap(long)]
+    height: Option<usize>
 }
 
 impl RunArgs {
     fn run(&self) {
-        let canvas = PixelCanvas::new(self.width, self.height);
-        let mut program = ProgramState::new(canvas);
+        // load program
         let source_code = if let Some(filename) = &self.input {
             fs::read_to_string(filename).expect("Something went wrong reading the file")
         } else {
             read_stdin_to_string()
         };
-        let commands = parsing::parse_program(source_code);
-        program.execute(&commands.expect("Error parsing code"));
+        let commands = parsing::parse_program(source_code).expect("Error parsing code");
+        // determine size + offset
+        let (width, height, x_offset, y_offset) = if let Some((width, height)) = self.width.zip(self.height) {
+            (width, height, 0, 0)
+        } else {
+            let sizing_canvas = SizingCanvas::new();
+            let mut sizing_program = ProgramState::new(sizing_canvas);
+            sizing_program.execute(&commands);
+            // since the program took ownership of the sizing canvas, we need to get it back
+            let sizing_canvas = sizing_program.canvas();
+            let (width, height) = sizing_canvas.dimensions();
+            let (x_offset, y_offset) = sizing_canvas.offsets();
+            (width, height, x_offset, y_offset)
+        };
+        let canvas = PixelCanvas::new(width, height, x_offset, y_offset);
+        let mut program = ProgramState::new(canvas);
+        program.execute(&commands);
         program.save_canvas(&self.output);
     }
 }

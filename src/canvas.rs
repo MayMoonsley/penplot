@@ -1,5 +1,5 @@
 use crate::color::Color;
-use std::cmp::Ordering;
+use std::cmp::{self, Ordering};
 
 // trait for drawing canvases, allowing us to abstract over drawing SVGs and PNGs
 // the trait only exposes things the program state cares about, allowing it to stop worrying about implementation
@@ -25,6 +25,8 @@ pub trait SaveableCanvas {
 pub struct PixelCanvas {
     width: usize,
     height: usize,
+    x_offset: isize,
+    y_offset: isize,
     pen_x: f32,
     pen_y: f32,
     pen_color: Color,
@@ -32,9 +34,9 @@ pub struct PixelCanvas {
 }
 
 impl PixelCanvas {
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn new(width: usize, height: usize, x_offset: isize, y_offset: isize) -> Self {
         PixelCanvas {
-            width, height,
+            width, height, x_offset, y_offset,
             pen_x: 0.0,
             pen_y: 0.0,
             pen_color: Color::transparent(),
@@ -49,6 +51,8 @@ impl PixelCanvas {
     fn draw_pixel_i(&mut self, x: isize, y: isize) {
         let w = self.width as isize;
         let h = self.height as isize;
+        let x = x + self.x_offset;
+        let y = y + self.y_offset;
         if x < 0 || y < 0 || x >= w || y >= h {
             // do nothing, since we're off the page
         } else {
@@ -130,5 +134,61 @@ impl SaveableCanvas for PixelCanvas {
             self.height as u32,
             image::ColorType::Rgba8,
         ).unwrap();
+    }
+}
+
+// "canvas" that merely keeps track of the bounding box of the drawing
+// this can be used to compute offsets / necessary width
+pub struct SizingCanvas {
+    min_x: isize,
+    min_y: isize,
+    max_x: isize,
+    max_y: isize
+}
+
+impl SizingCanvas {
+    pub fn new() -> Self {
+        SizingCanvas {
+            min_x: 0,
+            min_y: 0,
+            max_x: 0,
+            max_y: 0
+        }
+    }
+
+    pub fn dimensions(&self) -> (usize, usize) {
+        if self.max_x < self.min_x || self.max_y < self.min_y {
+            panic!("SizingCanvas min < max");
+        }
+        // these values add one to avoid off-by-one errors (if the image has min_x = 512, max_x = 512, it's 1 pixel wide)
+        ((self.max_x - self.min_x + 1) as usize, (self.max_y - self.min_y + 1) as usize)
+    }
+
+    pub fn offsets(&self) -> (isize, isize) {
+        (-self.min_x, -self.min_y)
+    }
+
+    fn update_values(&mut self, new_x: isize, new_y: isize) {
+        // update mins
+        self.min_x = cmp::min(self.min_x, new_x);
+        self.min_y = cmp::min(self.min_y, new_y);
+        // update maxes
+        self.max_x = cmp::max(self.max_x, new_x);
+        self.max_y = cmp::max(self.max_y, new_y);
+    }
+}
+
+impl DrawingCanvas for SizingCanvas {
+    fn move_pen_to(&mut self, x: f32, y: f32) {
+        self.update_values(x.round() as isize, y.round() as isize);
+    }
+
+    // the below methods are no-ops since color / blotting doesn't matter
+    fn blot(&mut self, _x: f32, _y: f32) {
+
+    }
+
+    fn set_color(&mut self, _color: Color) {
+
     }
 }

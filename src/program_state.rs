@@ -111,6 +111,10 @@ impl<T: DrawingCanvas> ProgramState<T> {
             Some(pc) => pc,
         }
     }
+
+    pub fn canvas(self) -> T {
+        self.canvas
+    }
 }
 
 impl<T: DrawingCanvas + SaveableCanvas> ProgramState<T> {
