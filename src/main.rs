@@ -1,4 +1,3 @@
-#![feature(stdin_forwarders)]
 mod canvas;
 mod color;
 mod instruction;
